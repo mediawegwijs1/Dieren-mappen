@@ -464,3 +464,29 @@ build();
 path = "/mnt/data/dieren_sorteren_mappen_demo_v2_9.html"
 with open(path, "w", encoding="utf-8") as f:
     f.write(html)
+/* FIX voor tablets (landscape en algemeen) */
+.folder .body {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Zorg dat input + OK knop altijd zichtbaar blijven */
+.nameRow {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 6px 0;
+  z-index: 2;
+}
+
+/* Extra ruimte onderin zodat knop niet wordt afgesneden */
+.folder .drop {
+  margin-bottom: 10px;
+}
+
+/* Specifiek voor liggende tablets */
+@media (orientation: landscape) {
+  .folder .body {
+    max-height: 55vh;
+  }
+}
