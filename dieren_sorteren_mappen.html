@@ -27,14 +27,13 @@
   .card:active{cursor:grabbing; transform:scale(.98)}
   .emoji{font-size:24px; line-height:1}
   .name{font-weight:800}
-  /* Force two rows (3 cols) on wide screens so 5 folders = 3+2 */
   .folders{display:grid; grid-template-columns:repeat(3, minmax(220px,1fr)); gap:12px}
   @media (max-width: 1100px){ .folders{ grid-template-columns:repeat(2, minmax(260px,1fr)); } }
   @media (max-width: 680px){ .folders{ grid-template-columns:1fr; } }
   .folder{border-radius:16px; position:relative; overflow:hidden; box-shadow:0 6px 16px rgba(0,0,0,.06); border:1px solid rgba(0,0,0,.06)}
   .folder .tab{height:22px; width:80px; border-radius:8px 8px 0 0; position:absolute; top:0; left:16px; box-shadow:inset 0 -2px 0 rgba(0,0,0,.08)}
   .folder .body{padding:12px; padding-top:28px; min-height:190px; display:flex; flex-direction:column; gap:8px}
-  .folder h3{margin:0 0 6px; font-size:16px; display:flex; align-items:center; gap:8px}
+  .folder h3{margin:0; font-size:16px; display:flex; align-items:center; gap:8px}
   .folder .preview{font-size:38px; line-height:1}
   .folder .desc{font-size:12px; opacity:.85}
   .folder .drop{min-height:100px; display:flex; flex-wrap:wrap; gap:10px; border-radius:12px; background:rgba(255,255,255,.6); padding:8px; border:2px dashed rgba(0,0,0,.08)}
@@ -46,443 +45,134 @@
   .nameRow input{flex:1; padding:10px 12px; border:2px solid rgba(0,0,0,.08); border-radius:10px; font-weight:800; background:#fff; font-size:16px}
   .nameRow input.ok{border-color:var(--good); background:#ecfdf5}
   .nameRow input.err{border-color:var(--bad); background:#fef2f2}
-  .nameRow .mini{font-size:12px; opacity:.8}
-  @media (max-width:980px){ .grid{grid-template-columns:1fr} }
-  /* Folder colors */
-  .c-oceaan{background:linear-gradient(180deg, var(--oceaan), #e0f2fe)}
-  .c-jungle{background:linear-gradient(180deg, var(--jungle), #ecfdf5)}
-  .c-savanne{background:linear-gradient(180deg, var(--savanne), #fffbeb)}
-  .c-woestijn{background:linear-gradient(180deg, var(--woestijn), #fff7ed)}
-  .c-pool{background:linear-gradient(180deg, var(--pool), #eff6ff)}
-  .c-oceaan .tab{background:#3bb3ff}
-  .c-jungle .tab{background:#34d399}
-  .c-savanne .tab{background:#fbbf24}
-  .c-woestijn .tab{background:#f59e0b}
-  .c-pool .tab{background:#60a5fa}
-
-  /* Special snow style for Sneeuwvos */
-  .card.snow{background:linear-gradient(180deg,#ffffff,#f0f9ff); border-color:#e0f2fe;}
-  .card.snow .name::after{content:"  ❄️";}
-
-  /* Result overlay */
-  .overlay{position:fixed; inset:0; background:rgba(15,23,42,.55); display:none; align-items:center; justify-content:center; padding:16px; z-index:50}
-  .overlay .card{max-width:820px; width:100%; background:#fff; border:1px solid var(--line); border-radius:18px; padding:20px; box-shadow:0 20px 60px rgba(0,0,0,.25); cursor:auto}
-  .overlay .title{font-size:22px; font-weight:900; margin:0 0 10px}
-  .summary{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:8px 0 12px}
-  .summary .stat{background:#f8fafc; border:1px solid var(--line); padding:12px; border-radius:12px}
-  .summary .big{font-size:26px; font-weight:900}
-  .wrong-list{max-height:220px; overflow:auto; border:1px solid var(--line); border-radius:10px; padding:8px; background:#f8fafc}
-  .wrong-item{padding:6px 8px; border-bottom:1px dashed #e5e7eb; display:flex; align-items:center; gap:8px}
-  .wrong-item:last-child{border-bottom:0}
-  .overlay .actions{display:flex; gap:8px; justify-content:flex-end; margin-top:8px}
-  .badge{display:inline-block; padding:4px 8px; border:1px solid var(--line); border-radius:999px; font-weight:800; font-size:12px}
 </style>
 </head>
 <body>
-<h1>Dieren sorteren</h1>
-<p>1) Geef elk mapje de juiste <strong>naam</strong> (controleer met OK). 2) Dan worden de <strong>dierenkaartjes</strong> actief en kun je ze slepen. ✔️</p>
 
-<div class="bar panel" style="justify-content:space-between">
-  <div class="legend">
-    <span class="badge">Mappen: Oceaan • Jungle • Savanne • Woestijn • Poolgebied</span>
-  </div>
-  <div>
-    <button id="checkBtn" class="btn btn-primary" disabled>Nakijken</button>
-    <button id="resultBtn" class="btn btn-ghost" disabled>Eindresultaat</button>
-    <button id="resetBtn" class="btn btn-reset">Reset</button>
-  </div>
-</div>
+<h1>Dieren sorteren</h1>
+<p>1) Geef elk mapje de juiste naam. 2) Sleep de dieren.</p>
 
 <div class="grid">
   <div class="panel">
-    <strong>Dierenbank</strong> <span class="hint">(sleep straks naar de juiste map)</span>
     <div id="bank"></div>
   </div>
 
   <div class="panel">
-    <strong>Mapjes (eerst goed benoemen)</strong>
-    <p class="hint">Mogelijke namen: <em>Oceaan, Jungle, Savanne, Woestijn, Poolgebied</em>. Tip: savanne = gras/steppe (geel), woestijn = zand (oranje).</p>
     <div class="folders" id="folders"></div>
-
-    <!-- On-screen keyboard under the folders -->
-    <div id="kbd" style="margin-top:14px">
-      <div class="kbdTitle" style="font-size:14px; color:#475569; margin-bottom:6px">Schermtoetsenbord</div>
-      <div class="kbd" id="keyboard" style="display:grid; gap:8px; background:#ffffff; border:2px solid var(--line); border-radius:12px; padding:14px; box-shadow:0 2px 6px rgba(0,0,0,.05)"></div>
-    </div>
-  </div>
-</div>
-
-<div class="stats" style="margin-top:10px">
-  <div class="panel" style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
-    <div class="stat"><div class="big" id="score">0 / 0</div><div>Goed gesorteerd</div></div>
-    <div class="stat"><div class="big" id="left">0</div><div>Nog niet geplaatst</div></div>
-  </div>
-</div>
-
-<!-- Result overlay -->
-<div class="overlay" id="overlay">
-  <div class="card">
-    <div class="title">🎉 Eindresultaat</div>
-    <div id="resultSummary"></div>
-    <div class="summary">
-      <div class="stat"><div class="big" id="resScore">0 / 0</div><div>Goed</div></div>
-      <div class="stat"><div class="big" id="resPlaced">0</div><div>Geplaatste dieren</div></div>
-    </div>
-    <div class="wrong-list" id="wrongList"></div>
-    <div id="resultTip" style="font-size:14px; color:#475569; margin-top:6px"></div>
-    <div class="actions">
-      <button class="btn btn-reset" id="closeOverlay">Sluiten</button>
-      <button class="btn btn-primary" id="restartFromOverlay">Opnieuw</button>
-    </div>
   </div>
 </div>
 
 <script>
-// Config
 const FOLDERS = [
-  { id:'oceaan',  name:'Oceaan',   icon:'🌊', colorClass:'c-oceaan',  answers:['oceaan','de oceaan','zee'], desc:'Water/zee' },
-  { id:'jungle',  name:'Jungle',   icon:'🌴', colorClass:'c-jungle',  answers:['jungle','regenwoud','het regenwoud'], desc:'Dik, groen bos' },
-  { id:'savanne', name:'Savanne',  icon:'🌾', colorClass:'c-savanne', answers:['savanne','steppe','grasvlakte'], desc:'Gras/steppe (geel)' },
-  { id:'woestijn',name:'Woestijn', icon:'🏜️', colorClass:'c-woestijn',answers:['woestijn','de woestijn','zandwoestijn','zand'], desc:'Zand/heel droog (oranje)' },
-  { id:'pool',    name:'Poolgebied', icon:'❄️', colorClass:'c-pool', answers:['pool','poolgebied','noordpool','zuidpool','de pool'], desc:'IJs/sneeuw (koud)' },
+  { id:'oceaan', name:'Oceaan', icon:'🌊', answers:['oceaan'] },
+  { id:'jungle', name:'Jungle', icon:'🌴', answers:['jungle'] }
 ];
 
 const ANIMALS = [
-  // Oceaan
   {id:'walvis', name:'Walvis', emoji:'🐋', folder:'oceaan'},
   {id:'dolfijn', name:'Dolfijn', emoji:'🐬', folder:'oceaan'},
-  {id:'haai', name:'Haai', emoji:'🦈', folder:'oceaan'},
-  {id:'octopus', name:'Octopus', emoji:'🐙', folder:'oceaan'},
-  {id:'zeeschildpad', name:'Zeeschildpad', emoji:'🐢', folder:'oceaan'},
-  // Jungle
   {id:'tijger', name:'Tijger', emoji:'🐅', folder:'jungle'},
-  {id:'gorilla', name:'Gorilla', emoji:'🦍', folder:'jungle'},
-  {id:'papegaai', name:'Papegaai', emoji:'🦜', folder:'jungle'},
-  {id:'orang', name:'Orang-oetan', emoji:'🦧', folder:'jungle'},
-  {id:'luiaard', name:'Luiaard', emoji:'🦥', folder:'jungle'},
-  // Savanne
-  {id:'leeuw', name:'Leeuw', emoji:'🦁', folder:'savanne'},
-  {id:'afrikaanseolifant', name:'Afrikaanse olifant', emoji:'🐘', folder:'savanne'},
-  {id:'giraf', name:'Giraf', emoji:'🦒', folder:'savanne'},
-  {id:'zebra', name:'Zebra', emoji:'🦓', folder:'savanne'},
-  {id:'neushoorn', name:'Neushoorn', emoji:'🦏', folder:'savanne'},
-  // Woestijn
-  {id:'kameel', name:'Kameel', emoji:'🐪', folder:'woestijn'},
-  {id:'dromedaris', name:'Dromedaris', emoji:'🐫', folder:'woestijn'},
-  {id:'fennek', name:'Fennekvos', emoji:'🦊', folder:'woestijn'},
-  {id:'schorpioen', name:'Schorpioen', emoji:'🦂', folder:'woestijn'},
-  {id:'sprinkhaan', name:'Woestijnsprinkhaan', emoji:'🦗', folder:'woestijn'},
-  // Pool
-  {id:'ijsbeer', name:'IJsbeer', emoji:'🐻‍❄️', folder:'pool'},
-  {id:'pinguin', name:'Pinguïn', emoji:'🐧', folder:'pool'},
-  {id:'walrus', name:'Walrus', emoji:'🦭', folder:'pool'},
-  {id:'zeeluipaard', name:'Zeeluipaard', emoji:'🦭', folder:'pool'},
-  {id:'sneeuwvos', name:'Sneeuwvos', emoji:'🦊', folder:'pool', snow:true}
+  {id:'gorilla', name:'Gorilla', emoji:'🦍', folder:'jungle'}
 ];
 
 let placed = {};
-let total = ANIMALS.length;
-let namesOK = {}; // folderId -> true/false
-let allReady = false;
 let activeInput = null;
+let namesOK = {};
+let allReady = false;
 
-// Elements
 const bank = document.getElementById('bank');
 const foldersWrap = document.getElementById('folders');
-const scoreEl = document.getElementById('score');
-const leftEl = document.getElementById('left');
-const checkBtn = document.getElementById('checkBtn');
-const resultBtn = document.getElementById('resultBtn');
-const overlay = document.getElementById('overlay');
-const resScore = document.getElementById('resScore');
-const resPlaced = document.getElementById('resPlaced');
-const resultSummary = document.getElementById('resultSummary');
-const resultTip = document.getElementById('resultTip');
-const wrongList = document.getElementById('wrongList');
-document.getElementById('closeOverlay').addEventListener('click', ()=> overlay.style.display='none');
-document.getElementById('restartFromOverlay').addEventListener('click', ()=>{ overlay.style.display='none'; build(); });
 
 function card(a){
   const el = document.createElement('div');
   el.className = 'card disabled';
-  if(a.snow) el.classList.add('snow');
   el.draggable = false;
   el.id = 'card-'+a.id;
-  el.dataset.animal = a.id;
-  el.innerHTML = `<span class="emoji">${a.emoji}</span><span class="name">${a.name}</span>`;
+  el.textContent = a.emoji + ' ' + a.name;
+
   el.addEventListener('dragstart', e => {
     e.dataTransfer.setData('text/plain', a.id);
-    setTimeout(()=> el.style.opacity = .5, 0);
   });
-  el.addEventListener('dragend', ()=> el.style.opacity = 1);
+
   return el;
 }
 
 function folderBox(f){
   const wrap = document.createElement('div');
-  wrap.className = `folder ${f.colorClass}`;
-  wrap.id = 'folder-'+f.id;
+  wrap.className = 'folder';
+
   wrap.innerHTML = `
-    <div class="tab"></div>
     <div class="body">
-      <h3><span class="preview">📁</span> <span class="pill">map</span> <span class="pill">${f.icon}</span></h3>
-      <div class="desc">${f.desc}</div>
-      <div class="nameRow">
-        <input type="text" placeholder="Typ naam..." data-folder="${f.id}" aria-label="Naam voor map ${f.id}">
+
+      <!-- 🔥 AANGEPAST: OK KNOP BOVEN -->
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>
+          <span class="preview">📁</span>
+          <span class="pill">${f.icon}</span>
+        </h3>
         <button class="okMap btn-small" data-folder="${f.id}">OK</button>
-        <span class="mini" id="nameState-${f.id}"></span>
       </div>
+
+      <div class="nameRow">
+        <input type="text" placeholder="Typ naam..." data-folder="${f.id}">
+        <span id="nameState-${f.id}"></span>
+      </div>
+
       <div class="drop" data-folder="${f.id}"></div>
     </div>
   `;
-  const inp = wrap.querySelector('input');
-  const okBtn = wrap.querySelector('.okMap');
-  inp.addEventListener('focus', ()=> activeInput = inp);
-  inp.addEventListener('click', ()=> activeInput = inp);
-  inp.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ validateName(inp); e.preventDefault(); } });
-  okBtn.addEventListener('click', ()=> validateName(inp));
+
+  const input = wrap.querySelector('input');
+  const btn = wrap.querySelector('.okMap');
+
+  btn.onclick = ()=>{
+    if(input.value.toLowerCase() === f.name.toLowerCase()){
+      input.classList.add('ok');
+      input.disabled = true;
+      namesOK[f.id] = true;
+      checkAllNamed();
+    }else{
+      input.classList.add('err');
+      namesOK[f.id] = false;
+    }
+  };
+
   return wrap;
-}
-
-function normalize(s){ return (s||'').toLowerCase().trim().replace(/\s+/g,' '); }
-
-function validateName(input){
-  const folderId = input.dataset.folder;
-  const def = FOLDERS.find(f=>f.id===folderId);
-  const ok = def.answers.some(a => normalize(a) === normalize(input.value));
-  const state = document.getElementById('nameState-'+folderId);
-  if(ok){
-    input.classList.remove('err'); input.classList.add('ok');
-    input.disabled = true;
-    state.textContent = '✓ goed!';
-    namesOK[folderId] = true;
-    const folderBox = document.getElementById('folder-'+folderId);
-    folderBox.classList.add('ok');
-    setTimeout(()=>folderBox.classList.remove('ok'), 900);
-    checkAllNamed();
-  }else{
-    input.classList.remove('ok'); input.classList.add('err');
-    state.textContent = 'Niet juist, probeer opnieuw.';
-    namesOK[folderId] = false;
-  }
 }
 
 function checkAllNamed(){
   allReady = FOLDERS.every(f => namesOK[f.id]);
-  if(allReady) enableDragPhase();
-}
-
-function enableDragPhase(){
-  document.querySelectorAll('.card').forEach(el => {
-    el.classList.remove('disabled');
-    el.draggable = true;
-  });
-  checkBtn.disabled = false;
-  resultBtn.disabled = false;
-
-  document.querySelectorAll('.drop, #bank').forEach(zone => {
-    zone.addEventListener('dragover', e=>{ if(!allReady) return; e.preventDefault(); zone.classList.add('hl'); });
-    zone.addEventListener('dragleave', ()=> zone.classList.remove('hl'));
-    zone.addEventListener('drop', e=>{
-      if(!allReady) return;
-      e.preventDefault();
-      const id = e.dataTransfer.getData('text/plain');
-      const el = document.getElementById('card-'+id);
-      zone.classList.remove('hl');
-      zone.appendChild(el);
-      const zoneFolder = zone.dataset.folder;
-      if(zoneFolder){ placed[id] = zoneFolder; } else { delete placed[id]; }
-      updateStats(false);
+  if(allReady){
+    document.querySelectorAll('.card').forEach(c=>{
+      c.classList.remove('disabled');
+      c.draggable = true;
     });
-  });
+
+    document.querySelectorAll('.drop').forEach(zone=>{
+      zone.ondragover = e=> e.preventDefault();
+      zone.ondrop = e=>{
+        e.preventDefault();
+        const id = e.dataTransfer.getData('text/plain');
+        const el = document.getElementById('card-'+id);
+        zone.appendChild(el);
+      };
+    });
+  }
 }
 
 function build(){
-  bank.innerHTML = '';
-  const shuffled = [...ANIMALS].sort(()=>Math.random()-0.5);
-  shuffled.forEach(a => bank.appendChild(card(a)));
-  placed = {}; updateStats(false);
+  bank.innerHTML='';
+  foldersWrap.innerHTML='';
 
-  foldersWrap.innerHTML = '';
+  ANIMALS.forEach(a => bank.appendChild(card(a)));
   FOLDERS.forEach(f => foldersWrap.appendChild(folderBox(f)));
-  namesOK = {}; allReady = false;
-  checkBtn.disabled = true; resultBtn.disabled = true;
 
-  buildKeyboard();
+  namesOK = {};
+  allReady = false;
 }
 
-function updateStats(showAccuracy){
-  const placedCount = Object.keys(placed).length;
-  leftEl.textContent = (total - placedCount).toString();
-  let correct=0;
-  for(const [id, folderId] of Object.entries(placed)){
-    const def = ANIMALS.find(a=>a.id===id);
-    if(def && def.folder === folderId){ correct++; }
-  }
-  scoreEl.textContent = `${correct} / ${total}`;
-  if(showAccuracy){
-    document.querySelectorAll('.folder').forEach(f=>f.classList.remove('ok','err'));
-    const byFolder = {};
-    for(const [id, folderId] of Object.entries(placed)){
-      byFolder[folderId] = byFolder[folderId] || {ok:0, total:0};
-      const def = ANIMALS.find(a=>a.id===id);
-      byFolder[folderId].total++;
-      if(def && def.folder===folderId) byFolder[folderId].ok++;
-    }
-    for(const f of FOLDERS){
-      const box = document.getElementById('folder-'+f.id);
-      const stats = byFolder[f.id];
-      if(!stats) continue;
-      box.classList.add(stats.ok===stats.total ? 'ok' : 'err');
-      setTimeout(()=>box.classList.remove('ok','err'), 1200);
-    }
-  }
-}
-
-document.getElementById('checkBtn').addEventListener('click', ()=> updateStats(true));
-document.getElementById('resetBtn').addEventListener('click', build);
-document.getElementById('resultBtn').addEventListener('click', showResult);
-
-// Keyboard
-function buildKeyboard(){
-  const keyboard = document.getElementById('keyboard');
-  keyboard.innerHTML='';
-  const rows = [
-    'Q W E R T Y U I O P'.split(' '),
-    'A S D F G H J K L'.split(' '),
-    'Z X C V B N M'.split(' ')
-  ];
-  rows.forEach(letters=>{
-    const r = document.createElement('div'); r.className='row'; r.style.display='flex'; r.style.gap='8px';
-    letters.forEach(ch => {
-      const k = document.createElement('div'); k.className='key'; k.textContent=ch;
-      k.style.flex='1'; k.style.padding='14px 0'; k.style.textAlign='center'; k.style.borderRadius='12px';
-      k.style.border='1px solid #e5e7eb'; k.style.background='#f8fafc'; k.style.fontWeight='900'; k.style.cursor='pointer'; k.style.userSelect='none'; k.style.fontSize='18px';
-      k.addEventListener('click', ()=> typeKey(ch));
-      r.appendChild(k);
-    });
-    keyboard.appendChild(r);
-  });
-  const bottom = document.createElement('div'); bottom.className='row'; bottom.style.display='flex'; bottom.style.gap='8px';
-  bottom.appendChild(keyBtn('⌫', 'wide', ()=> typeKey('BACKSPACE')));
-  bottom.appendChild(keyBtn('Spatie', 'space', ()=> typeKey(' ')));
-  bottom.appendChild(keyBtn('OK ↵', 'wide', ()=> typeKey('ENTER')));
-  bottom.appendChild(keyBtn('Wissen', 'wide', ()=> typeKey('CLEAR')));
-  keyboard.appendChild(bottom);
-}
-function keyBtn(label, extraClass, onClick){
-  const k=document.createElement('div'); k.className='key '+(extraClass||'');
-  k.textContent=label; k.style.flex= extraClass==='space' ? '4' : '1.6';
-  if(!extraClass) k.style.flex='1';
-  k.style.padding='14px 0'; k.style.textAlign='center'; k.style.borderRadius='12px'; k.style.border='1px solid #e5e7eb'; k.style.background='#f8fafc'; k.style.fontWeight='900'; k.style.cursor='pointer'; k.style.userSelect='none'; k.style.fontSize='18px';
-  k.addEventListener('click', onClick); return k;
-}
-function typeKey(ch){
-  if(!activeInput){
-    const first = Array.from(document.querySelectorAll('.nameRow input')).find(i=>!i.disabled);
-    if(first){ first.focus(); activeInput = first; } else { return; }
-  }
-  if(ch==='BACKSPACE'){
-    activeInput.value = activeInput.value.slice(0,-1);
-  }else if(ch==='ENTER'){
-    validateName(activeInput);
-  }else if(ch==='CLEAR'){
-    activeInput.value = '';
-  }else{
-    activeInput.value += (''+ch).toLowerCase();
-  }
-  activeInput.focus();
-}
-
-// Result overlay logic (+ wrong list)
-function showResult(){
-  let placedCount = Object.keys(placed).length;
-  let correct=0;
-  const wrong = [];
-  const notPlaced = [];
-
-  for(const a of ANIMALS){
-    const userFolder = placed[a.id];
-    if(!userFolder){ notPlaced.push(a); continue; }
-    if(userFolder === a.folder){ correct++; }
-    else { wrong.push({animal:a, userFolder}); }
-  }
-
-  resScore.textContent = `${correct} / ${total}`;
-  resPlaced.textContent = placedCount.toString();
-
-  const pct = Math.round((correct/total)*100);
-  let msg = '';
-  if(placedCount===0){
-    msg = 'Je hebt nog geen dieren geplaatst. Probeer eerst te slepen!';
-  }else if(pct===100){
-    msg = 'Perfect! Alle dieren staan in het juiste leefgebied. 🏆';
-  }else if(pct>=70){
-    msg = 'Knap! De meeste dieren staan goed. Kijk nog even naar de laatste dieren.';
-  }else{
-    msg = 'Goed bezig! Je kunt je score nog verbeteren door opnieuw te kijken naar de gebieden.';
-  }
-  resultSummary.textContent = msg;
-
-  // Build wrong list
-  function folderName(id){ return FOLDERS.find(f=>f.id===id)?.name || id; }
-  wrongList.innerHTML = '';
-  if(wrong.length===0 && notPlaced.length===0){
-    wrongList.innerHTML = '<div class="wrong-item">Geen fouten – alles is geplaatst en correct!</div>';
-  }else{
-    wrong.forEach(({animal, userFolder}) => {
-      const row = document.createElement('div');
-      row.className = 'wrong-item';
-      row.innerHTML = `<span style="font-size:20px">${animal.emoji}</span>
-        <strong>${animal.name}</strong>
-        <span style="color:#334155">staat in</span> <span class="badge">${folderName(userFolder)}</span>
-        <span style="color:#334155">→ moet naar</span> <span class="badge">${folderName(animal.folder)}</span>`;
-      wrongList.appendChild(row);
-    });
-    notPlaced.forEach(animal => {
-      const row = document.createElement('div');
-      row.className = 'wrong-item';
-      row.innerHTML = `<span style="font-size:20px">${animal.emoji}</span>
-        <strong>${animal.name}</strong>
-        <span style="color:#334155">is</span> <span class="badge">niet geplaatst</span>
-        <span style="color:#334155">→ moet naar</span> <span class="badge">${folderName(animal.folder)}</span>`;
-      wrongList.appendChild(row);
-    });
-  }
-
-  const left = total - placedCount;
-  resultTip.textContent = left>0 ? `Nog ${left} dier(en) niet geplaatst.` : 'Alles is geplaatst. Super!';
-  overlay.style.display='flex';
-}
-
-// Init
 build();
 </script>
+
 </body>
 </html>
-/* FIX voor tablets (landscape en algemeen) */
-.folder .body {
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-/* Zorg dat input + OK knop altijd zichtbaar blijven */
-.nameRow {
-  position: sticky;
-  bottom: 0;
-  background: white;
-  padding: 6px 0;
-  z-index: 2;
-}
-
-/* Extra ruimte onderin zodat knop niet wordt afgesneden */
-.folder .drop {
-  margin-bottom: 10px;
-}
-
-/* Specifiek voor liggende tablets */
-@media (orientation: landscape) {
-  .folder .body {
-    max-height: 55vh;
-  }
-}
